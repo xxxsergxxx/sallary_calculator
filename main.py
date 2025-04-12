@@ -1,10 +1,8 @@
 import streamlit as st
 import pandas as pd
 import calendar
-import locale
 
-locale.setlocale(locale.LC_TIME, "uk_UA.UTF-8")  # для Linux/Mac
-# locale.setlocale(locale.LC_TIME, "ukr")        # для Windows, якщо підтримується
+
 
 from datetime import date, datetime
 
@@ -63,9 +61,10 @@ if uploaded_file:
     df["Дата"] = pd.to_datetime(df["Дата"])
     df["День тижня"] = df["Дата"].dt.dayofweek.map(ukr_weekdays)
     df["Свято"] = df["Дата"].dt.date.isin(ukr_holidays_2025).map({True: "Так", False: "Ні"})
-    
+
     st.session_state.df = df
-    st.session_state.edited_df = df.copy()  
+    st.session_state.edited_df = df.copy()
+
 
 
 
@@ -82,6 +81,8 @@ if "df" not in st.session_state:
     df["Свято"] = df["Дата"].dt.date.isin(ukr_holidays_2025).map({True: "Так", False: "Ні"})
     df["Кількість годин"] = ""
     st.session_state.df = df.copy()
+    st.session_state.edited_df = df.copy()
+
 
 # 📌 Editted table
 st.title("📋 Табель робочих годин")
@@ -101,12 +102,15 @@ if st.button("🕗 Заповнити 8 годин для робочих дні�
     df = st.session_state.df.copy()
     df["Кількість годин"] = df.apply(auto_fill_hours, axis=1)
     st.session_state.df = df
+    st.session_state.edited_df = df.copy()
+
 
 
 
 # Making editable after filling
+
 edited_df = st.data_editor(
-    st.session_state.df,
+    st.session_state.edited_df,
     num_rows="dynamic",
     use_container_width=True,
     column_config={
@@ -122,7 +126,7 @@ edited_df = st.data_editor(
     disabled=["Дата", "День тижня", "Свято"]
 )
 
-st.session_state.df = edited_df  # Saving changes
+st.session_state.edited_df = edited_df  # Saving changes
 
 # 📌 Function calculation sallary
 def calculate_salary_details(row, rate):
