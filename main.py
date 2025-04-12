@@ -95,7 +95,7 @@ def calculate_salary_details(row, rate):
 
     # Відрахування
     pdfo = gross * 0.18
-    military = gross * 0.015
+    military = gross * 0.050
     clean = gross - pdfo - military
 
     return pd.Series([gross, clean, pdfo, military])
