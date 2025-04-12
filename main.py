@@ -48,13 +48,19 @@ if uploaded_file:
         st.session_state.edited_df = df.copy()
 
 # 📅 Генерація табелю при першому запуску
-if "edited_df" not in st.session_state:
+if (
+    "edited_df" not in st.session_state or
+    st.session_state.get("prev_start_date") != start_date or
+    st.session_state.get("prev_end_date") != end_date
+):
     all_days = pd.date_range(start=start_date, end=end_date, freq='D')
     df = pd.DataFrame({"Дата": all_days})
     df["День тижня"] = df["Дата"].dt.dayofweek.map(ukr_weekdays)
     df["Свято"] = df["Дата"].dt.date.isin(ukr_holidays_2025).map({True: "Так", False: "Ні"})
     df["Кількість годин"] = ""
     st.session_state.edited_df = df.copy()
+    st.session_state.prev_start_date = start_date
+    st.session_state.prev_end_date = end_date
 
 # 🕗 Автозаповнення
 st.title("📋 Табель робочих годин")
@@ -144,3 +150,4 @@ st.download_button(
     file_name=file_name,
     mime="text/csv"
 )
+І
