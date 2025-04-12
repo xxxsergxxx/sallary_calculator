@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 from datetime import date, datetime
+from calendar import monthrange
+
 
 # 📌 Святкові дні України (2025)
 ukr_holidays_2025 = [
@@ -26,9 +28,16 @@ ukr_weekdays = {
 
 # 📌 Сайдбар
 st.sidebar.title("⚙️ Налаштування")
+month = st.sidebar.selectbox("Місяць", options=list(ukr_months.keys()), format_func=lambda m: ukr_months[m])
+year = st.sidebar.number_input("Рік", min_value=2020, max_value=2030, value=2025, step=1)
+
+start_date = date(year, month, 1)
+last_day = monthrange(year, month)[1]  # кількість днів у місяці
+end_date = date(year, month, last_day)
+
+
 rate = st.sidebar.number_input("Тариф (грн/год)", value=10.0, step=0.5)
-start_date = st.sidebar.date_input("Початкова дата", value=date(2025, 1, 1))
-end_date = st.sidebar.date_input("Кінцева дата", value=date(2025, 1, 31))
+
 
 if start_date > end_date:
     st.error("❌ Початкова дата не може бути пізніше кінцевої")
@@ -129,25 +138,29 @@ def calculate_salary_details(row, rate):
 
     return pd.Series([gross, clean, pdfo, military])
 
-edited_df[["Брудна зарплата", "Чиста зарплата", "ПДФО", "Військовий збір"]] = edited_df.apply(
-    lambda row: calculate_salary_details(row, rate=rate), axis=1
-)
+if st.button("🔢 Розрахувати зарплату"):
+    edited_df[["Брудна зарплата", "Чиста зарплата", "ПДФО", "Військовий збір"]] = edited_df.apply(
+        lambda row: calculate_salary_details(row, rate=rate), axis=1
+    )
 
 # 📊 Підсумки
-st.markdown("### 📊 Підсумки")
-col1, col2 = st.columns(2)
-col1.metric("💰 Брудна зарплата", f"{edited_df['Брудна зарплата'].sum():.2f} грн")
-col2.metric("🧾 Чиста зарплата", f"{edited_df['Чиста зарплата'].sum():.2f} грн")
+# 📊 Підсумки та завантаження — тільки якщо вже є розрахунок
+if "Брудна зарплата" in edited_df.columns:
+    st.markdown("### 📊 Підсумки")
+    col1, col2 = st.columns(2)
+    col1.metric("💰 Брудна зарплата", f"{edited_df['Брудна зарплата'].sum():.2f} грн")
+    col2.metric("🧾 Чиста зарплата", f"{edited_df['Чиста зарплата'].sum():.2f} грн")
 
-# 💾 Збереження у файл
-month_name = ukr_months[start_date.month]
-year = start_date.year
-file_name = f"Табель_{month_name}_{year}.csv"
+    # 💾 Збереження у файл
+    month_name = ukr_months[start_date.month]
+    year = start_date.year
+    file_name = f"Табель_{month_name}_{year}.csv"
 
-st.download_button(
-    label="💾 Завантажити табель",
-    data=edited_df.to_csv(index=False).encode('utf-8-sig'),
-    file_name=file_name,
-    mime="text/csv"
-)
-І
+    st.download_button(
+        label="💾 Завантажити табель",
+        data=edited_df.to_csv(index=False).encode('utf-8-sig'),
+        file_name=file_name,
+        mime="text/csv"
+    )
+else:
+    st.info("🔔 Натисніть кнопку **Розрахувати зарплату**, щоб побачити підсумки і зберегти файл.")
